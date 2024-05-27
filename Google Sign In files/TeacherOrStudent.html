@@ -1,0 +1,18 @@
+{% load socialaccount %}
+<html lang="en">
+<head>
+    
+</head>
+<body>
+    <form method="post">
+        {% csrf_token %}
+        <label for="teacherButton"> Are you a teacher? </label>
+        <input type="checkbox" name="teacherButton">
+        <label for="teachingArea"> If so, what area do you teach in? </label>
+        <input type="text" name="Area" placeholder="Maths">
+
+        <br>
+        <button type="submit" name="TeacherOrStudentButton"> Submit </button>
+    </form>
+</body>
+</html>
