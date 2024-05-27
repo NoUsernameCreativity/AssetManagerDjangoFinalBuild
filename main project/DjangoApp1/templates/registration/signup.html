@@ -1,0 +1,22 @@
+<! -- This is a html template, in which we replace the placeholders in python code -->
+<! -- placeholders: header, title, description, buttons[list], tableHeaders[list], tableContent[dict] -->
+
+
+{% extends "registration/registrationBase.html" %}
+
+{% block title %} Sign up {% endblock %}
+
+{% block content %}
+    <p> Or, log in here: </p>
+    <a href="{% url 'login' %}">Login!</a>
+    <hr>
+
+    <form method="post">
+        {% csrf_token %}
+        <br>
+        {{ form.as_p }}
+        <! --Button-->
+        <button type="submit" name="add_user">Add user</button>
+    </form>
+
+{% endblock %}

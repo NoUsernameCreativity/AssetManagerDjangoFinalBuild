@@ -1,0 +1,201 @@
+<! -- This is a html template, in which we replace the placeholders in python code -->
+<! -- placeholders: header, title, description, buttons[list], tableHeaders[list], tableContent[dict] -->
+
+<! -- Load javascript -->
+{% load static %}
+<html>
+<head>
+    <title>{{ header }}</title>
+</head>
+<body>
+    <! --Hyperlinks which go to a page defined in URL (response in views)-->
+    {% if page == "Assets" %}
+    <a href="{% url 'home' %}" class="link" onclick="PostSelectedAssetData()">Click here to go back home!</a>
+    <a href="{% url 'assets' %}" class="link" onclick="PostSelectedAssetData()">See assets!</a>
+    <a href="{% url 'selected_assets' %}" class="link" onclick="PostSelectedAssetData()">See selected assets (edit here)!</a>
+    <a href="{% url 'users' %}" class="link" onclick="PostSelectedAssetData()">See users!</a>
+    <a href="{% url 'events' %}" class="link" onclick="PostSelectedAssetData()">See loans/events!</a>
+    {% else %}
+    <a href="{% url 'home' %}" class="link">Click here to go back home!</a>
+    <a href="{% url 'assets' %}" class="link">See assets!</a>
+    <a href="{% url 'selected_assets' %}" class="link">See selected assets (edit here)!</a>
+    <a href="{% url 'users' %}" class="link">See users!</a>
+    <a href="{% url 'events' %}" class="link">See loans/events!</a>
+    {% endif %}
+    <br>
+    {% if user.is_authenticated %}
+    <strong> Welcome, {{user.username}}. </strong>
+    <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit"> Log out</button>
+    </form>
+    {%else%}
+    <p> Log in, or sign up here: </p>
+    <a href="{% url 'sign_up' %}">Sign up!</a>
+    <a href="{% url 'login' %}">Login!</a>
+    {%endif%}
+    <hr>
+
+    <strong>{{ title }}</strong>
+    <br> <! --line break-->
+    <p>{{ description }}</p>
+
+    <! --Creating assets/users buttons-->
+
+    {% if 'add_user' in buttons %}
+    <form method="post">
+        {% csrf_token %}
+        <br>
+        {{ forms.userForm.as_p }}
+        <! --Button-->
+        <button type="submit" name="add_user">Add user</button>
+    </form>
+    {% endif %}
+
+    <br>
+    {% if 'add_asset' in buttons %}
+    <strong>Add new asset</strong>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ forms.assetForm.as_p }}
+        <button type="submit" name="asset_form"> <strong>Create asset</strong> </button>
+    </form>
+
+    <! --filters for adding an asset-->
+    <br>
+    <strong> Filters: </strong>
+    <form method="post">
+        {% csrf_token %}
+
+        <label for="SubjectFilter">Subject:</label>
+        <input type="text" name="SubjectFilter" placeholder="Some Subject">
+        <! --Button-->
+        <button type="submit" name="filter_assets">filter</button>
+    </form>
+    <form method="post">
+        {% csrf_token %}
+        <! --Button-->
+        <button type="submit" name="select_all_assets">Select all assets</button>
+    </form>
+    {% endif %}
+
+    <br>
+    {% if 'edit_selected_assets' in buttons %}
+    <! --Selected assets buttons/forms-->
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="clear_selected_assets">Clear all selected assets</button>
+    </form>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" onclick="userFeedback()" name="delete_selected_assets">Delete all selected assets</button>
+    </form>
+    <br>
+
+    <form method="post">
+        {% csrf_token %}
+        <! --Inputs-->
+        <label for="Name">Name:</label>
+        <input type="text" name="Name" placeholder="Some asset">
+        <br>
+        <label for="Location">Location:</label>
+        <input type="text" name="Location" placeholder="IT room">
+        <br>
+        <label for="Count">Count:</label>
+        <input type="number" name="Count" placeholder="IT room">
+        <br>
+        <label for="Subject">Subject:</label>
+        <input type="text" name="Subject" placeholder="IT">
+        <br>
+        <label for="Value">Value:</label>
+        <input type="number" name="Value" min="0" placeholder="5">
+
+        <br>
+        <! --Button-->
+        {% if alert %}
+        <button type="submit" onclick="userFeedback()" name="edit_selected_assets">Edit all selected assets</button>
+        {% else %}
+        <button type="submit" name="edit_selected_assets">Edit all selected assets</button>
+        {% endif %}
+    </form>
+    {% endif %}
+
+    <! --Table showing page content (relational, ie. each new data point is a new row)-->
+    <br>
+    {% if tableContent %}
+    <table>
+        <! --Headers (based off 'table headers variable')-->
+        <tr>
+            <! new row, add all headers -->
+            {% for header in tableHeaders %}
+            <th>
+                {{header}}
+            </th>
+            {% endfor %}
+        </tr>
+
+        <! --Sort by buttons-->
+        <tr>
+            {% for key in tableContent.0.keys %}
+            <th>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" name="sortby_{{key}}">Sort by</button>
+                </form>
+            </th>
+            {% endfor %}
+        </tr>
+
+        <! --rows-->
+        {% for data in tableContent %}
+        <tr>
+            <! --loop through attributes of the data-->
+            {% for attribute in data.values %}
+            {% if 'images' in attribute %}
+            <td><img src="{{attribute}}" width='300' /></td>
+            {% else %}
+            <td>{{attribute}}</td>
+            {% endif %}
+            {% endfor %}
+
+            <! --Add to selected assets button-->
+            {% if 'select_assets' in buttons %}
+            <td>
+                <button class="selectAssetButtons" onclick="SelectButton(this.id)" type="submit" name="selectedassetid_{{data.id}}" id="selectedassetid_{{data.id}}">Add to selected assets</button>
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+
+    </table>
+    {% else %}
+    <strong>No Data!</strong>
+    {% endif %}
+
+    {% if 'add_event' in buttons %}
+    <! --Code to add a new event-->
+    <form method="post">
+        <p>Add a new event (loan/calendar) containing each of these assets here</p>
+        {% csrf_token %}
+        <! --Inputs-->
+        {{form.as_p}}
+        <! --Button-->
+        <button type="submit" name="create_event">Create event!</button>
+    </form>
+    {% endif %}
+
+    {% if page == "Assets" %}
+    <script type="text/javascript">
+        var csrftoken = '{{csrf_token}}'
+        var selectedButtonsString = '{{selectedAssets}}'
+    </script>
+    {% endif %}
+    <script type="text/javascript" src="{% static 'DjangoApp1/UserFeedback.js' %}"></script>
+    <script type="text/javascript" src="{% static 'DjangoApp1/SelectAssets.js' %}"></script>
+    {% if alert %}
+        <script>
+            userFeedback();
+        </script>
+    {% endif %}
+</body>
+</html>
